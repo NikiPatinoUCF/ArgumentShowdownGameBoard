@@ -1,0 +1,227 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-sans);}
+.page{padding:1.5rem 0;}
+.show-title{font-size:22px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;}
+.show-sub{font-size:14px;color:var(--color-text-secondary);margin-bottom:1.5rem;}
+.scoreboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
+.score-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.75rem;text-align:center;}
+.score-team{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;}
+.score-pts{font-size:24px;font-weight:500;color:var(--color-text-primary);}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:1.25rem 0;}
+.section-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-tertiary);margin-bottom:.75rem;}
+.category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:1.5rem;}
+.cat-btn{border-radius:var(--border-radius-md);padding:.6rem .4rem;text-align:center;cursor:pointer;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);transition:opacity .15s;}
+.cat-btn.used{opacity:.35;pointer-events:none;}
+.cat-label{font-size:11px;font-weight:500;margin-bottom:4px;}
+.cat-pts{font-size:18px;font-weight:500;}
+.cat-thesis .cat-label{color:#3C3489;}
+.cat-thesis .cat-pts{color:#3C3489;}
+.cat-thesis{border-color:#AFA9EC;}
+.cat-evidence .cat-label{color:#0F6E56;}
+.cat-evidence .cat-pts{color:#0F6E56;}
+.cat-evidence{border-color:#5DCAA5;}
+.cat-counter .cat-label{color:#993C1D;}
+.cat-counter .cat-pts{color:#993C1D;}
+.cat-counter{border-color:#F0997B;}
+.cat-org .cat-label{color:#633806;}
+.cat-org .cat-pts{color:#633806;}
+.cat-org{border-color:#FAC775;}
+.cat-tone .cat-label{color:#72243E;}
+.cat-tone .cat-pts{color:#72243E;}
+.cat-tone{border-color:#ED93B1;}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;}
+.prompt-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem;margin:1rem 0;}
+.prompt-cat{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-tertiary);margin-bottom:.4rem;}
+.prompt-text{font-size:15px;color:var(--color-text-primary);line-height:1.6;}
+.prompt-pts{font-size:12px;color:var(--color-text-secondary);margin-top:.5rem;}
+.btn-row{display:flex;gap:8px;margin-top:.75rem;flex-wrap:wrap;}
+button{cursor:pointer;}
+.team-select{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:1rem 0;}
+.team-btn{border-radius:var(--border-radius-md);padding:.5rem;font-size:13px;text-align:center;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);}
+.team-btn:hover{background:var(--color-background-secondary);}
+.rules-list{font-size:14px;color:var(--color-text-secondary);line-height:1.9;padding-left:1.25rem;}
+.pill{display:inline-block;font-size:11px;font-weight:500;border-radius:999px;padding:2px 10px;}
+.pill-purple{background:#EEEDFE;color:#3C3489;}
+.pill-teal{background:#E1F5EE;color:#085041;}
+.pill-coral{background:#FAECE7;color:#712B13;}
+.pill-amber{background:#FAEEDA;color:#633806;}
+.pill-pink{background:#FBEAF0;color:#72243E;}
+.hidden{display:none;}
+</style>
+
+<div class="page">
+  <div class="show-title">Argument Showdown</div>
+  <div class="show-sub">A peer-review game show — five categories, four teams, one student essay on the line</div>
+
+  <div class="section-label">Scoreboard</div>
+  <div class="scoreboard">
+    <div class="score-card"><div class="score-team">Team 1</div><div class="score-pts" id="s1">0</div></div>
+    <div class="score-card"><div class="score-team">Team 2</div><div class="score-pts" id="s2">0</div></div>
+    <div class="score-card"><div class="score-team">Team 3</div><div class="score-pts" id="s3">0</div></div>
+    <div class="score-card"><div class="score-team">Team 4</div><div class="score-pts" id="s4">0</div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label">Category board — pick a square to play</div>
+  <div class="category-grid" id="board"></div>
+
+  <div id="prompt-area" class="hidden">
+    <div class="prompt-box">
+      <div class="prompt-cat" id="p-cat"></div>
+      <div class="prompt-text" id="p-text"></div>
+      <div class="prompt-pts" id="p-pts"></div>
+    </div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.5rem;">Award points to:</div>
+    <div class="team-select">
+      <button class="team-btn" onclick="award(1)">Team 1</button>
+      <button class="team-btn" onclick="award(2)">Team 2</button>
+      <button class="team-btn" onclick="award(3)">Team 3</button>
+      <button class="team-btn" onclick="award(4)">Team 4</button>
+    </div>
+    <div class="btn-row">
+      <button class="team-btn" onclick="noPoints()" style="border-color:var(--color-border-tertiary);color:var(--color-text-tertiary);">No correct answer — skip</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label">How to play</div>
+  <div class="card">
+    <ol class="rules-list">
+      <li>Divide into four teams. Each team gets a copy of the same student argumentative draft.</li>
+      <li>Teams read the essay silently for 5 minutes before play begins.</li>
+      <li>Teams take turns selecting a category and point value from the board above.</li>
+      <li>The instructor reads the prompt aloud. Teams write their answer (30 seconds), then share out.</li>
+      <li>Best answer — most specific, most textually grounded — earns the points.</li>
+      <li>Ties go to the team that can name the exact location in the essay (paragraph number, line).</li>
+      <li>Play until the board is cleared. Highest score wins.</li>
+    </ol>
+    <div style="margin-top:1rem;display:flex;gap:6px;flex-wrap:wrap;">
+      <span class="pill pill-purple">Thesis</span>
+      <span class="pill pill-teal">Evidence</span>
+      <span class="pill pill-coral">Counterargument</span>
+      <span class="pill pill-amber">Organization</span>
+      <span class="pill pill-pink">Tone</span>
+    </div>
+  </div>
+
+  <button style="margin-top:.5rem;padding:6px 14px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-primary);cursor:pointer;" onclick="sendPrompt('Can you generate a printable Argument Showdown answer sheet for student teams?')">Generate a team answer sheet ↗</button>
+</div>
+
+<script>
+const categories = {
+  thesis: {
+    label: "Thesis",
+    cls: "cat-thesis",
+    prompts: [
+      ["Is the thesis arguable — could a reasonable person disagree with it? Point to specific language.", 100],
+      ["Does the thesis take a clear stance, or is it just an observation? Quote the thesis and explain.", 200],
+      ["Does the thesis tell the reader *why* the writer holds this position? If not, what's missing?", 300],
+      ["Rewrite the thesis to make it more specific and arguable without changing the writer's intent.", 400],
+      ["Rate the thesis 1–5 for clarity and arguability. Justify with evidence from the text.", 500],
+    ]
+  },
+  evidence: {
+    label: "Evidence",
+    cls: "cat-evidence",
+    prompts: [
+      ["Find one piece of evidence in the essay. Is it credible? How do you know?", 100],
+      ["Identify a paragraph where evidence is 'dropped in' without explanation. Quote it.", 200],
+      ["Which claim has the weakest support? What kind of evidence would strengthen it?", 300],
+      ["Find the most convincing piece of evidence. Why does it work?", 400],
+      ["Is the evidence balanced — multiple types (data, example, quote)? What's missing?", 500],
+    ]
+  },
+  counter: {
+    label: "Counter",
+    cls: "cat-counter",
+    prompts: [
+      ["Does the essay acknowledge an opposing view? Where?", 100],
+      ["Is the counterargument presented fairly, or is it a strawman? Explain.", 200],
+      ["Does the refutation actually defeat the counterargument? Why or why not?", 300],
+      ["If there is no counterargument, identify the strongest opposing view the writer ignores.", 400],
+      ["Write a two-sentence counterargument the writer should address, based on the essay's topic.", 500],
+    ]
+  },
+  org: {
+    label: "Org",
+    cls: "cat-org",
+    prompts: [
+      ["Name the three main sections of the essay (intro, body, conclusion). Where does each begin?", 100],
+      ["Find a transition between two paragraphs. Is it smooth or abrupt? Quote it.", 200],
+      ["Is the order of body paragraphs logical? Would rearranging any improve the argument?", 300],
+      ["Identify a topic sentence that doesn't clearly connect to the thesis. Quote it and explain.", 400],
+      ["Reverse-outline the essay in three bullet points. Does the structure match the thesis?", 500],
+    ]
+  },
+  tone: {
+    label: "Tone",
+    cls: "cat-tone",
+    prompts: [
+      ["Find one sentence that sounds confident and fair. Quote it.", 100],
+      ["Find one sentence that sounds aggressive or biased. How would you revise it?", 200],
+      ["Does the conclusion leave an impact? What specific word or phrase makes it land — or fall flat?", 300],
+      ["Is the essay persuasive without being preachy? Point to a moment that pushes too hard.", 400],
+      ["Write a one-sentence revision of the conclusion that adds a stronger call to action.", 500],
+    ]
+  }
+};
+
+const pointValues = [100, 200, 300, 400, 500];
+let used = {};
+let currentCell = null;
+let currentPts = 0;
+
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  Object.keys(categories).forEach(key => {
+    const cat = categories[key];
+    pointValues.forEach(pts => {
+      const id = key + '_' + pts;
+      const div = document.createElement('div');
+      div.className = 'cat-btn ' + cat.cls + (used[id] ? ' used' : '');
+      div.id = 'cell_' + id;
+      div.innerHTML = '<div class="cat-label">' + cat.label + '</div><div class="cat-pts">$' + pts + '</div>';
+      div.onclick = () => selectCell(key, pts, id);
+      board.appendChild(div);
+    });
+  });
+}
+
+function selectCell(key, pts, id) {
+  if (used[id]) return;
+  currentCell = id;
+  currentPts = pts;
+  const cat = categories[key];
+  const idx = pointValues.indexOf(pts);
+  const [text] = cat.prompts[idx];
+  document.getElementById('p-cat').textContent = cat.label + ' — ' + pts + ' points';
+  document.getElementById('p-text').textContent = text;
+  document.getElementById('p-pts').textContent = 'Teams: 30 seconds to write your answer.';
+  document.getElementById('prompt-area').classList.remove('hidden');
+  window.scrollTo({top: document.getElementById('prompt-area').offsetTop - 20, behavior: 'smooth'});
+}
+
+function award(team) {
+  if (!currentCell) return;
+  const s = document.getElementById('s' + team);
+  s.textContent = parseInt(s.textContent) + currentPts;
+  closeCell();
+}
+
+function noPoints() { closeCell(); }
+
+function closeCell() {
+  used[currentCell] = true;
+  document.getElementById('cell_' + currentCell).classList.add('used');
+  currentCell = null;
+  currentPts = 0;
+  document.getElementById('prompt-area').classList.add('hidden');
+}
+
+buildBoard();
+</script>
