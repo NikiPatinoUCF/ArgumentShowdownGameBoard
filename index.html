@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argument Showdown — Game Board</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #1B2A4A;
+    color: #fff;
+    min-height: 100vh;
+    padding: 1.5rem;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .title-block h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #F5C842;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .title-block p {
+    font-size: 0.85rem;
+    color: #8BA0BF;
+    margin-top: 4px;
+  }
+
+  .scoreboard {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .score-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .score-label {
+    font-size: 11px;
+    color: #8BA0BF;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .score-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #F5C842;
+    line-height: 1.2;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .col-header {
+    border-radius: 8px;
+    padding: 0.6rem 0.4rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+  }
+
+  .col-thesis    { background: #534AB7; color: #fff; }
+  .col-evidence  { background: #1D9E75; color: #fff; }
+  .col-counter   { background: #D85A30; color: #fff; }
+  .col-org       { background: #BA7517; color: #fff; }
+  .col-tone      { background: #993556; color: #fff; }
+
+  .cell {
+    border-radius: 8px;
+    padding: 0.75rem 0.4rem;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.1s, opacity 0.2s;
+    user-select: none;
+  }
+
+  .cell:hover:not(.used) { transform: scale(1.04); }
+  .cell:active:not(.used) { transform: scale(0.97); }
+
+  .cell.used {
+    opacity: 0.25;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .cell-thesis   { background: #EEEDFE; color: #3C3489; border-color: #AFA9EC; }
+  .cell-evidence { background: #E1F5EE; color: #085041; border-color: #5DCAA5; }
+  .cell-counter  { background: #FAECE7; color: #712B13; border-color: #F0997B; }
+  .cell-org      { background: #FAEEDA; color: #633806; border-color: #EF9F27; }
+  .cell-tone     { background: #FBEAF0; color: #72243E; border-color: #ED93B1; }
+
+  .prompt-area {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: none;
+  }
+
+  .prompt-area.active { display: block; }
+
+  .prompt-meta {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8BA0BF;
+    margin-bottom: 0.6rem;
+  }
+
+  .prompt-text {
+    font-size: 1.15rem;
+    color: #fff;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .prompt-note {
+    font-size: 0.8rem;
+    color: #8BA0BF;
+    margin-bottom: 1rem;
+  }
+
+  .award-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .award-btn {
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: #F5C842;
+    color: #1B2A4A;
+    transition: transform 0.1s;
+  }
+
+  .award-btn:hover { transform: scale(1.04); }
+  .award-btn:active { transform: scale(0.96); }
+
+  .skip-btn {
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #8BA0BF;
+    transition: background 0.15s;
+  }
+
+  .skip-btn:hover { background: rgba(255,255,255,0.07); }
+
+  .timer-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+
+  .timer-bar {
+    height: 100%;
+    width: 100%;
+    background: #F5C842;
+    border-radius: 3px;
+    transition: width 1s linear, background 0.5s;
+  }
+
+  .timer-bar.urgent { background: #D85A30; }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #F5C842;
+    color: #1B2A4A;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.6rem 1.5rem;
+    border-radius: 999px;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .reset-btn {
+    display: block;
+    margin: 0 auto;
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #8BA0BF;
+    transition: background 0.15s;
+  }
+
+  .reset-btn:hover { background: rgba(255,255,255,0.07); }
+
+  .cat-desc {
+    font-size: 10px;
+    color: #8BA0BF;
+    text-align: center;
+    margin-top: 4px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>ARGUMENT SHOWDOWN</h1>
+    <p>ENC 1101 &nbsp;·&nbsp; Peer Review Game Show</p>
+  </div>
+  <div class="scoreboard">
+    <div class="score-card"><div class="score-label">Team 1</div><div class="score-value" id="s1">0</div></div>
+    <div class="score-card"><div class="score-label">Team 2</div><div class="score-value" id="s2">0</div></div>
+    <div class="score-card"><div class="score-label">Team 3</div><div class="score-value" id="s3">0</div></div>
+    <div class="score-card"><div class="score-label">Team 4</div><div class="score-value" id="s4">0</div></div>
+  </div>
+</header>
+
+<div class="board" id="board"></div>
+
+<div class="prompt-area" id="prompt-area">
+  <div class="prompt-meta" id="p-meta"></div>
+  <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+  <div class="prompt-text" id="p-text"></div>
+  <div class="prompt-note">30 seconds — all teams write their answer, then share out.</div>
+  <div class="award-row">
+    <button class="award-btn" onclick="award(1)">+ Team 1</button>
+    <button class="award-btn" onclick="award(2)">+ Team 2</button>
+    <button class="award-btn" onclick="award(3)">+ Team 3</button>
+    <button class="award-btn" onclick="award(4)">+ Team 4</button>
+    <button class="skip-btn" onclick="skip()">No correct answer — skip</button>
+  </div>
+</div>
+
+<button class="reset-btn" onclick="resetBoard()">Reset board &amp; scores</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const categories = {
+  thesis: {
+    label: 'Thesis',
+    cls: 'thesis',
+    desc: 'Is the argument clear and arguable?',
+    prompts: [
+      'Is the thesis statement arguable — could a reasonable person disagree? Point to specific language in the essay.',
+      'Does the thesis take a clear stance, or is it just an observation? Quote the thesis and explain the difference.',
+      'Does the thesis tell the reader WHY the writer holds this position? If not, what is missing?',
+      'Rewrite the thesis to make it more specific and arguable — without changing the writer\'s core intent.',
+      'Rate the thesis 1–5 for clarity and arguability. Justify your rating with at least two references to the text.'
+    ]
+  },
+  evidence: {
+    label: 'Evidence',
+    cls: 'evidence',
+    desc: 'Is support credible and well-explained?',
+    prompts: [
+      'Find one piece of evidence in the essay. Is it credible? How do you know?',
+      'Identify a paragraph where evidence is dropped in without explanation. Quote the sentence.',
+      'Which claim has the weakest support? What type of evidence would strengthen it?',
+      'Find the most convincing piece of evidence in the essay. Explain specifically why it works.',
+      'Is the evidence balanced — does the writer use multiple types (data, example, quote)? What is missing?'
+    ]
+  },
+  counter: {
+    label: 'Counter',
+    cls: 'counter',
+    desc: 'Does the essay address opposing views?',
+    prompts: [
+      'Does the essay acknowledge an opposing view anywhere? Point to where.',
+      'Is the counterargument presented fairly, or is it a strawman? Explain with reference to the text.',
+      'Does the refutation actually defeat the counterargument? Why or why not?',
+      'If there is no counterargument, identify the strongest opposing view the writer ignores.',
+      'Write a two-sentence counterargument the writer should address, based on the essay\'s topic.'
+    ]
+  },
+  org: {
+    label: 'Org',
+    cls: 'org',
+    desc: 'Do ideas flow logically?',
+    prompts: [
+      'Name the three main sections of the essay. Where does each one begin?',
+      'Find a transition between two paragraphs. Is it smooth or abrupt? Quote it.',
+      'Is the order of body paragraphs logical? Would rearranging any of them improve the argument?',
+      'Identify a topic sentence that does not clearly connect to the thesis. Quote it and explain.',
+      'Reverse-outline the essay in three bullet points. Does the structure match what the thesis promises?'
+    ]
+  },
+  tone: {
+    label: 'Tone',
+    cls: 'tone',
+    desc: 'Is the essay persuasive and fair?',
+    prompts: [
+      'Find one sentence that sounds confident and fair. Quote it.',
+      'Find one sentence that sounds aggressive or biased. How would you revise it?',
+      'Does the conclusion leave an impact? What specific word or phrase makes it land — or fall flat?',
+      'Is the essay persuasive without being preachy? Point to a moment that pushes too hard.',
+      'Write a one-sentence revision of the conclusion that adds a stronger call to action.'
+    ]
+  }
+};
+
+const pts = [100, 200, 300, 400, 500];
+const scores = [0, 0, 0, 0];
+const used = {};
+let current = null;
+let currentPts = 0;
+let timerInterval = null;
+let timerSeconds = 30;
+
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  Object.keys(categories).forEach(key => {
+    const cat = categories[key];
+    const header = document.createElement('div');
+    header.className = 'col-header col-' + cat.cls;
+    header.innerHTML = cat.label + '<div class="cat-desc">' + cat.desc + '</div>';
+    board.appendChild(header);
+  });
+  pts.forEach((p, pi) => {
+    Object.keys(categories).forEach(key => {
+      const cat = categories[key];
+      const id = key + '_' + p;
+      const cell = document.createElement('div');
+      cell.className = 'cell cell-' + cat.cls + (used[id] ? ' used' : '');
+      cell.id = 'cell_' + id;
+      cell.textContent = '$' + p;
+      cell.onclick = () => selectCell(key, p, pi, id);
+      board.appendChild(cell);
+    });
+  });
+}
+
+function selectCell(key, p, pi, id) {
+  if (used[id]) return;
+  current = id;
+  currentPts = p;
+  const cat = categories[key];
+  document.getElementById('p-meta').textContent = cat.label + ' — $' + p;
+  document.getElementById('p-text').textContent = cat.prompts[pi];
+  document.getElementById('prompt-area').classList.add('active');
+  startTimer();
+  window.scrollTo({ top: document.getElementById('prompt-area').offsetTop - 20, behavior: 'smooth' });
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerSeconds = 30;
+  const bar = document.getElementById('timer-bar');
+  bar.style.width = '100%';
+  bar.classList.remove('urgent');
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    const pct = Math.max(0, (timerSeconds / 30) * 100);
+    bar.style.width = pct + '%';
+    if (timerSeconds <= 8) bar.classList.add('urgent');
+    if (timerSeconds <= 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+function award(team) {
+  if (!current) return;
+  scores[team - 1] += currentPts;
+  document.getElementById('s' + team).textContent = scores[team - 1];
+  showToast('Team ' + team + ' +$' + currentPts);
+  closePrompt();
+}
+
+function skip() { closePrompt(); }
+
+function closePrompt() {
+  clearInterval(timerInterval);
+  if (current) {
+    used[current] = true;
+    const cell = document.getElementById('cell_' + current);
+    if (cell) cell.classList.add('used');
+  }
+  current = null;
+  currentPts = 0;
+  document.getElementById('prompt-area').classList.remove('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function resetBoard() {
+  if (!confirm('Reset all scores and the board?')) return;
+  Object.keys(used).forEach(k => delete used[k]);
+  scores.fill(0);
+  [1,2,3,4].forEach(i => document.getElementById('s'+i).textContent = '0');
+  document.getElementById('prompt-area').classList.remove('active');
+  clearInterval(timerInterval);
+  current = null;
+  buildBoard();
+}
+
+buildBoard();
+</script>
+</body>
+</html>
